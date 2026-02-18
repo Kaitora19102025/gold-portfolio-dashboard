@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gold Portfolio Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial; background:#f4f4f4; padding:20px; }
+        .card { background:white; padding:20px; margin:10px 0; border-radius:10px; }
+        h1 { color:#b8860b; }
+    </style>
+</head>
+<body>
+
+<h1>🪙 Gold Portfolio Dashboard</h1>
+
+<div class="card">
+    <h3>Total Modal Aktif</h3>
+    <p id="modal"></p>
+</div>
+
+<div class="card">
+    <h3>Total Realized Profit</h3>
+    <p id="profit"></p>
+</div>
+
+<div class="card">
+    <h3>Total Gram Aktif</h3>
+    <p id="gram"></p>
+</div>
+
+<div class="card">
+    <canvas id="statusChart"></canvas>
+</div>
+
+<script>
+fetch('data.json')
+.then(response => response.json())
+.then(data => {
+
+    let modalAktif = 0;
+    let realizedProfit = 0;
+    let gramAktif = 0;
+
+    let statusCount = { SOLD:0, READY:0, PO:0 };
+
+    data.forEach(item => {
+
+        if(item.status !== "SOLD"){
+            modalAktif += item.beli;
+            gramAktif += item.gram;
+        }
+
+        if(item.status === "SOLD"){
+            realizedProfit += (item.jual - item.beli);
+        }
+
+        statusCount[item.status]++;
+
+    });
+
+    document.getElementById("modal").innerHTML =
+        "Rp " + modalAktif.toLocaleString("id-ID");
+
+    document.getElementById("profit").innerHTML =
+        "Rp " + realizedProfit.toLocaleString("id-ID");
+
+    document.getElementById("gram").innerHTML =
+        gramAktif + " gram";
+
+    new Chart(document.getElementById("statusChart"), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(statusCount),
+            datasets: [{
+                data: Object.values(statusCount)
+            }]
+        }
+    });
+
+});
+</script>
+
+</body>
+</html>
