@@ -5,72 +5,66 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h1 { color: #b8860b; }
+        body { font-family: Arial, sans-serif; background:#f4f6f9; padding:20px; }
+        h1 { color:#b8860b; }
 
         .card {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            background:white;
+            padding:20px;
+            margin-bottom:20px;
+            border-radius:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
         }
 
         input, select {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
-            margin: 4px;
+            padding:8px;
+            margin:4px;
+            border-radius:6px;
+            border:1px solid #ccc;
         }
 
         button {
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: none;
-            background: #b8860b;
-            color: white;
-            cursor: pointer;
+            padding:8px 14px;
+            border:none;
+            border-radius:6px;
+            background:#b8860b;
+            color:white;
+            cursor:pointer;
         }
 
-        button:hover { background: #a47508; }
-
         table {
-            width: 100%;
-            border-collapse: collapse;
+            width:100%;
+            border-collapse:collapse;
         }
 
         th, td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            text-align: right;
+            padding:10px;
+            border-bottom:1px solid #eee;
+            text-align:right;
         }
 
-        th:first-child, td:first-child { text-align: center; }
-        th:nth-child(3), td:nth-child(3) { text-align: left; }
+        th:first-child, td:first-child { text-align:center; }
+        th:nth-child(3), td:nth-child(3) { text-align:left; }
 
-        .green { color: #0a8f3d; font-weight: bold; }
-        .red { color: #c0392b; font-weight: bold; }
+        .green { color:#0a8f3d; font-weight:bold; }
+        .red { color:#c0392b; font-weight:bold; }
 
         .chart-container {
-            max-width: 450px;
-            height: 320px;
-            margin: auto;
+            max-width:450px;
+            height:320px;
+            margin:auto;
         }
+
+        .locked { color:gray; font-size:12px; }
     </style>
 </head>
 <body>
 
 <h1>🪙 Gold Portfolio Dashboard</h1>
 
-<!-- FORM INPUT -->
+<!-- FORM -->
 <div class="card">
-    <h3>Tambah Transaksi</h3>
+    <h3>Tambah Transaksi Baru</h3>
     <input type="number" id="gram" placeholder="Gram">
     <input type="text" id="type" placeholder="Type">
     <input type="number" id="beli" placeholder="Harga Beli">
@@ -124,15 +118,34 @@
         </thead>
         <tbody id="tableBody"></tbody>
     </table>
+    <p class="locked">Data awal terkunci & tidak bisa dihapus</p>
 </div>
 
 <script>
 
-let goldData = JSON.parse(localStorage.getItem("goldData")) || [];
+// ===== DATA AWAL (TIDAK BISA DIHAPUS) =====
+const defaultData = [
+{no:1, gram:5, type:"LM", beli:13500000, jual:15700000, status:"SOLD"},
+{no:2, gram:8, type:"LM IMLEK 2026", beli:23950800, jual:26500000, status:"SOLD"},
+{no:3, gram:2, type:"LM", beli:5676000, jual:0, status:"PO"},
+{no:4, gram:3, type:"LM", beli:9744000, jual:0, status:"PO"},
+{no:5, gram:0.5, type:"LM WEDDING COUPLE", beli:1633500, jual:0, status:"READY"},
+{no:6, gram:0.5, type:"LM BABY BOY", beli:1633500, jual:0, status:"READY"},
+{no:7, gram:0.5, type:"LM BABY GIRL", beli:1633500, jual:0, status:"READY"},
+{no:8, gram:0.5, type:"LM WEDDING COUPLE", beli:1606500, jual:0, status:"READY"},
+{no:9, gram:0.5, type:"LM BABY BOY", beli:1606500, jual:0, status:"READY"},
+{no:10, gram:8, type:"LM IMLEK 2026", beli:24447300, jual:0, status:"READY"}
+];
+
+let userData = JSON.parse(localStorage.getItem("userData")) || [];
 let myChart;
 
-function saveData(){
-    localStorage.setItem("goldData", JSON.stringify(goldData));
+function getAllData(){
+    return [...defaultData, ...userData];
+}
+
+function saveUserData(){
+    localStorage.setItem("userData", JSON.stringify(userData));
 }
 
 function addData(){
@@ -148,38 +161,41 @@ function addData(){
         return;
     }
 
-    goldData.push({
-        no: goldData.length + 1,
-        gram, type, beli, jual, status
-    });
+    userData.push({ gram, type, beli, jual, status });
 
-    saveData();
+    saveUserData();
     renderTable();
     calculate();
 }
 
-function deleteData(index){
-    goldData.splice(index,1);
-    goldData.forEach((item,i)=> item.no = i+1);
-    saveData();
+function deleteUserData(index){
+    userData.splice(index,1);
+    saveUserData();
     renderTable();
     calculate();
 }
 
 function renderTable(){
+
+    let allData = getAllData();
     let tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
 
-    goldData.forEach((item,index)=>{
+    allData.forEach((item,i)=>{
+
+        let isDefault = i < defaultData.length;
+
         tbody.innerHTML += `
         <tr>
-            <td>${item.no}</td>
+            <td>${i+1}</td>
             <td>${item.gram}</td>
             <td>${item.type}</td>
             <td>Rp ${item.beli.toLocaleString("id-ID")}</td>
             <td>${item.jual ? "Rp "+item.jual.toLocaleString("id-ID") : "-"}</td>
             <td>${item.status}</td>
-            <td><button onclick="deleteData(${index})">Hapus</button></td>
+            <td>
+                ${isDefault ? "🔒" : `<button onclick="deleteUserData(${i-defaultData.length})">Hapus</button>`}
+            </td>
         </tr>
         `;
     });
@@ -188,15 +204,15 @@ function renderTable(){
 function calculate(){
 
     let currentPrice = parseFloat(document.getElementById("currentPrice").value);
+    let allData = getAllData();
 
     let modalAktif = 0;
     let realizedProfit = 0;
     let gramAktif = 0;
     let portfolioValue = 0;
-
     let statusCount = { SOLD:0, READY:0, PO:0 };
 
-    goldData.forEach(item=>{
+    allData.forEach(item=>{
 
         statusCount[item.status]++;
 
@@ -233,18 +249,15 @@ function calculate(){
     if(myChart){ myChart.destroy(); }
 
     myChart = new Chart(document.getElementById("statusChart"), {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(statusCount),
-            datasets: [{
-                data: Object.values(statusCount),
-                backgroundColor: ["#3498db","#2ecc71","#f39c12"]
+        type:'doughnut',
+        data:{
+            labels:Object.keys(statusCount),
+            datasets:[{
+                data:Object.values(statusCount),
+                backgroundColor:["#3498db","#2ecc71","#f39c12"]
             }]
         },
-        options:{
-            responsive:true,
-            maintainAspectRatio:false
-        }
+        options:{ responsive:true, maintainAspectRatio:false }
     });
 }
 
@@ -255,5 +268,6 @@ calculate();
 
 </body>
 </html>
+
 
 
