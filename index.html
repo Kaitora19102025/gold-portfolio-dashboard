@@ -3,16 +3,96 @@
 <head>
     <title>Gold Portfolio Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        body { font-family: Arial; background:#f4f4f4; padding:20px; }
-        .card { background:white; padding:20px; margin:10px 0; border-radius:10px; }
-        h1 { color:#b8860b; }
-        table { width:100%; border-collapse: collapse; margin-top:10px; }
-        th, td { padding:8px; border-bottom:1px solid #ddd; text-align:right; }
-        th { background:#fafafa; }
-        td:first-child, th:first-child { text-align:center; }
-        .green { color:green; font-weight:bold; }
-        .red { color:red; font-weight:bold; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #b8860b;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .summary p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+
+        .highlight {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .green { color: #0a8f3d; }
+        .red { color: #c0392b; }
+
+        input {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: none;
+            background: #b8860b;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #a47508;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: right;
+        }
+
+        th:first-child, td:first-child {
+            text-align: center;
+        }
+
+        th:nth-child(3), td:nth-child(3) {
+            text-align: left;
+        }
+
+        th {
+            background: #fafafa;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            height: 320px;
+            margin: auto;
+        }
+
+        @media(max-width:768px){
+            .chart-container{
+                max-width: 100%;
+                height: 300px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -25,19 +105,20 @@
     <button onclick="calculate()">Update</button>
 </div>
 
-<div class="card">
-    <h3>Summary</h3>
-    <p>Total Modal Aktif: <span id="modal"></span></p>
-    <p>Total Realized Profit: <span id="profit"></span></p>
-    <p>Total Gram Aktif: <span id="gram"></span></p>
-    <p>Average Buy / Gram: <span id="avg"></span></p>
-    <p>Nilai Portofolio Saat Ini: <span id="portfolio"></span></p>
-    <p>Unrealized P/L: <span id="unreal"></span></p>
+<div class="card summary">
+    <p>Total Modal Aktif: <span id="modal" class="highlight"></span></p>
+    <p>Total Realized Profit: <span id="profit" class="highlight"></span></p>
+    <p>Total Gram Aktif: <span id="gram" class="highlight"></span></p>
+    <p>Average Buy / Gram: <span id="avg" class="highlight"></span></p>
+    <p>Nilai Portofolio Saat Ini: <span id="portfolio" class="highlight"></span></p>
+    <p>Unrealized P/L: <span id="unreal" class="highlight"></span></p>
 </div>
 
 <div class="card">
     <h3>Komposisi Status</h3>
-    <canvas id="statusChart"></canvas>
+    <div class="chart-container">
+        <canvas id="statusChart"></canvas>
+    </div>
 </div>
 
 <div class="card">
@@ -60,6 +141,7 @@
 <script>
 
 let goldData = [];
+let myChart;
 
 fetch('data.json')
 .then(response => response.json())
@@ -78,9 +160,9 @@ function renderTable(){
         <tr>
             <td>${item.no}</td>
             <td>${item.gram}</td>
-            <td style="text-align:left">${item.type}</td>
+            <td>${item.type}</td>
             <td>Rp ${item.beli.toLocaleString("id-ID")}</td>
-            <td>${item.jual ? "Rp "+item.jual.toLocaleString("id-ID") : "-"}</td>
+            <td>${item.jual ? "Rp " + item.jual.toLocaleString("id-ID") : "-"}</td>
             <td>${item.status}</td>
         </tr>
         `;
@@ -136,13 +218,31 @@ function calculate(){
         Rp ${unrealized.toLocaleString("id-ID")}
         </span>`;
 
-    new Chart(document.getElementById("statusChart"), {
-        type: 'pie',
+    if(myChart){
+        myChart.destroy();
+    }
+
+    myChart = new Chart(document.getElementById("statusChart"), {
+        type: 'doughnut',
         data: {
             labels: Object.keys(statusCount),
             datasets: [{
-                data: Object.values(statusCount)
+                data: Object.values(statusCount),
+                backgroundColor: [
+                    "#3498db",
+                    "#2ecc71",
+                    "#f39c12"
+                ]
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
         }
     });
 
@@ -152,3 +252,4 @@ function calculate(){
 
 </body>
 </html>
+
