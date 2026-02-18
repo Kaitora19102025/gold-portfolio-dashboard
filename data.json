@@ -1,0 +1,12 @@
+[
+  {"no":1,"gram":5,"type":"LM","beli":13500000,"jual":15700000,"status":"SOLD"},
+  {"no":2,"gram":8,"type":"LM IMLEK 2026","beli":23950800,"jual":26500000,"status":"SOLD"},
+  {"no":3,"gram":2,"type":"LM","beli":5676000,"jual":0,"status":"PO"},
+  {"no":4,"gram":3,"type":"LM","beli":9744000,"jual":0,"status":"PO"},
+  {"no":5,"gram":0.5,"type":"LM WEDDING COUPLE","beli":1633500,"jual":0,"status":"READY"},
+  {"no":6,"gram":0.5,"type":"LM BABY BOY","beli":1633500,"jual":0,"status":"READY"},
+  {"no":7,"gram":0.5,"type":"LM BABY GIRL","beli":1633500,"jual":0,"status":"READY"},
+  {"no":8,"gram":0.5,"type":"LM WEDDING COUPLE","beli":1606500,"jual":0,"status":"READY"},
+  {"no":9,"gram":0.5,"type":"LM BABY BOY","beli":1606500,"jual":0,"status":"READY"},
+  {"no":10,"gram":8,"type":"LM IMLEK 2026","beli":24447300,"jual":0,"status":"READY"}
+]
