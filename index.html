@@ -1,265 +1,435 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gold Portfolio Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Gold Portfolio Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        body { font-family: Arial, sans-serif; background:#f4f6f9; padding:20px; }
-        h1 { color:#b8860b; }
+<style>
 
-        .card {
-            background:white;
-            padding:20px;
-            margin-bottom:20px;
-            border-radius:12px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.05);
-        }
+body{
+font-family:Arial;
+background:#f4f6f9;
+padding:20px;
+}
 
-        input, select {
-            padding:8px;
-            margin:4px;
-            border-radius:6px;
-            border:1px solid #ccc;
-        }
+h1{color:#b8860b;}
 
-        button {
-            padding:8px 14px;
-            border:none;
-            border-radius:6px;
-            background:#b8860b;
-            color:white;
-            cursor:pointer;
-        }
+.card{
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:12px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
 
-        table {
-            width:100%;
-            border-collapse:collapse;
-        }
+input,select{
+padding:6px;
+border-radius:6px;
+border:1px solid #ccc;
+}
 
-        th, td {
-            padding:10px;
-            border-bottom:1px solid #eee;
-            text-align:right;
-        }
+button{
+padding:6px 12px;
+border:none;
+border-radius:6px;
+background:#b8860b;
+color:white;
+cursor:pointer;
+}
 
-        th:first-child, td:first-child { text-align:center; }
-        th:nth-child(3), td:nth-child(3) { text-align:left; }
+table{
+width:100%;
+border-collapse:collapse;
+}
 
-        .green { color:#0a8f3d; font-weight:bold; }
-        .red { color:#c0392b; font-weight:bold; }
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+text-align:right;
+}
 
-        .chart-container {
-            max-width:450px;
-            height:320px;
-            margin:auto;
-        }
+th:first-child,td:first-child{text-align:center;}
+th:nth-child(3),td:nth-child(3){text-align:left;}
 
-        .locked { color:gray; font-size:12px; }
-    </style>
+.green{color:green;font-weight:bold;}
+.red{color:red;font-weight:bold;}
+.gray{color:gray;}
+
+.chart-container{
+max-width:450px;
+height:320px;
+margin:auto;
+}
+
+</style>
 </head>
 <body>
 
 <h1>🪙 Gold Portfolio Dashboard</h1>
 
-<!-- FORM -->
+<!-- INPUT -->
 <div class="card">
-    <h3>Tambah Transaksi Baru</h3>
-    <input type="number" id="gram" placeholder="Gram">
-    <input type="text" id="type" placeholder="Type">
-    <input type="number" id="beli" placeholder="Harga Beli">
-    <input type="number" id="jual" placeholder="Harga Jual (optional)">
-    <select id="status">
-        <option value="READY">READY</option>
-        <option value="PO">PO</option>
-        <option value="SOLD">SOLD</option>
-    </select>
-    <button onclick="addData()">Tambah</button>
+
+<h3>Tambah Transaksi</h3>
+
+<input type="number" id="gram" placeholder="Gram">
+<input type="text" id="type" placeholder="Type">
+<input type="number" id="beli" placeholder="Harga Beli">
+
+<select id="status">
+<option value="READY">READY</option>
+<option value="PO">PO</option>
+<option value="SOLD">SOLD</option>
+</select>
+
+<button onclick="addData()">Tambah</button>
+
 </div>
 
-<!-- HARGA EMAS -->
+<!-- GOLD PRICE -->
 <div class="card">
-    <label>Harga emas saat ini (per gram): </label>
-    <input type="number" id="currentPrice" value="1600000">
-    <button onclick="calculate()">Update</button>
+
+Harga emas per gram:
+
+<input type="number" id="currentPrice" value="1600000">
+
+<button onclick="calculate()">Update</button>
+
 </div>
 
 <!-- SUMMARY -->
 <div class="card">
-    <p>Total Modal Aktif: <span id="modal"></span></p>
-    <p>Total Realized Profit: <span id="profit"></span></p>
-    <p>Total Gram Aktif: <span id="gramTotal"></span></p>
-    <p>Nilai Portofolio Saat Ini: <span id="portfolio"></span></p>
-    <p>Unrealized P/L: <span id="unreal"></span></p>
+
+<p>Total Modal Aktif: <span id="modal"></span></p>
+<p>Total Realized Profit: <span id="profit"></span></p>
+<p>Total Gram Aktif: <span id="gramTotal"></span></p>
+<p>Nilai Portofolio: <span id="portfolio"></span></p>
+<p>Unrealized P/L: <span id="unreal"></span></p>
+
 </div>
 
 <!-- CHART -->
 <div class="card">
-    <h3>Komposisi Status</h3>
-    <div class="chart-container">
-        <canvas id="statusChart"></canvas>
-    </div>
+
+<h3>Komposisi Status</h3>
+
+<div class="chart-container">
+<canvas id="statusChart"></canvas>
+</div>
+
 </div>
 
 <!-- TABLE -->
 <div class="card">
-    <h3>Detail Transaksi</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Gram</th>
-                <th>Type</th>
-                <th>Beli</th>
-                <th>Jual</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
-    <p class="locked">Data awal terkunci & tidak bisa dihapus</p>
+
+<h3>Detail Transaksi</h3>
+
+<table>
+
+<thead>
+
+<tr>
+<th>No</th>
+<th>Gram</th>
+<th>Type</th>
+<th>Beli</th>
+<th>Jual</th>
+<th>Status</th>
+<th>Profit</th>
+<th>Action</th>
+</tr>
+
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
 </div>
 
 <script>
 
-// ===== DATA AWAL (TIDAK BISA DIHAPUS) =====
-const defaultData = [
-{no:1, gram:5, type:"LM", beli:13500000, jual:15700000, status:"SOLD"},
-{no:2, gram:8, type:"LM IMLEK 2026", beli:23950800, jual:26500000, status:"SOLD"},
-{no:3, gram:2, type:"LM", beli:5676000, jual:0, status:"PO"},
-{no:4, gram:3, type:"LM", beli:9744000, jual:0, status:"PO"},
-{no:5, gram:0.5, type:"LM WEDDING COUPLE", beli:1633500, jual:0, status:"READY"},
-{no:6, gram:0.5, type:"LM BABY BOY", beli:1633500, jual:0, status:"READY"},
-{no:7, gram:0.5, type:"LM BABY GIRL", beli:1633500, jual:0, status:"READY"},
-{no:8, gram:0.5, type:"LM WEDDING COUPLE", beli:1606500, jual:0, status:"READY"},
-{no:9, gram:0.5, type:"LM BABY BOY", beli:1606500, jual:0, status:"READY"},
-{no:10, gram:8, type:"LM IMLEK 2026", beli:24447300, jual:0, status:"READY"}
+// DEFAULT DATA
+
+const defaultData=[
+{gram:5,type:"LM",beli:13500000,jual:15700000,status:"SOLD"},
+{gram:8,type:"LM IMLEK 2026",beli:23950800,jual:26500000,status:"SOLD"},
+{gram:2,type:"LM",beli:5676000,jual:0,status:"PO"},
+{gram:3,type:"LM",beli:9744000,jual:0,status:"PO"},
+{gram:0.5,type:"LM WEDDING COUPLE",beli:1633500,jual:0,status:"READY"},
+{gram:0.5,type:"LM BABY BOY",beli:1633500,jual:0,status:"READY"},
+{gram:0.5,type:"LM BABY GIRL",beli:1633500,jual:0,status:"READY"},
+{gram:0.5,type:"LM WEDDING COUPLE",beli:1606500,jual:0,status:"READY"},
+{gram:0.5,type:"LM BABY BOY",beli:1606500,jual:0,status:"READY"},
+{gram:8,type:"LM IMLEK 2026",beli:24447300,jual:0,status:"READY"}
 ];
 
-let userData = JSON.parse(localStorage.getItem("userData")) || [];
+let userData=JSON.parse(localStorage.getItem("userData"))||[];
+let statusOverride=JSON.parse(localStorage.getItem("statusOverride"))||{};
+let jualOverride=JSON.parse(localStorage.getItem("jualOverride"))||{};
+
 let myChart;
 
+
+// GET ALL DATA
+
 function getAllData(){
-    return [...defaultData, ...userData];
+
+return defaultData.map((item,i)=>({
+
+...item,
+
+status:statusOverride[i]||item.status,
+
+jual:jualOverride[i]??item.jual
+
+})).concat(userData);
+
 }
 
-function saveUserData(){
-    localStorage.setItem("userData", JSON.stringify(userData));
+
+// SAVE
+
+function saveAll(){
+
+localStorage.setItem("userData",JSON.stringify(userData));
+localStorage.setItem("statusOverride",JSON.stringify(statusOverride));
+localStorage.setItem("jualOverride",JSON.stringify(jualOverride));
+
 }
+
+
+// ADD DATA
 
 function addData(){
 
-    let gram = parseFloat(document.getElementById("gram").value);
-    let type = document.getElementById("type").value;
-    let beli = parseFloat(document.getElementById("beli").value);
-    let jual = parseFloat(document.getElementById("jual").value) || 0;
-    let status = document.getElementById("status").value;
+let gram=parseFloat(document.getElementById("gram").value);
+let type=document.getElementById("type").value;
+let beli=parseFloat(document.getElementById("beli").value);
+let status=document.getElementById("status").value;
 
-    if(!gram || !type || !beli){
-        alert("Isi data dengan lengkap!");
-        return;
-    }
+let currentPrice=parseFloat(document.getElementById("currentPrice").value);
 
-    userData.push({ gram, type, beli, jual, status });
+let jual=status=="SOLD"?gram*currentPrice:0;
 
-    saveUserData();
-    renderTable();
-    calculate();
+userData.push({gram,type,beli,jual,status});
+
+saveAll();
+renderTable();
+calculate();
+
 }
+
+
+// UPDATE STATUS
+
+function updateStatus(index,value){
+
+let currentPrice=parseFloat(document.getElementById("currentPrice").value);
+
+if(index<defaultData.length){
+
+statusOverride[index]=value;
+
+if(value=="SOLD" && !jualOverride[index]){
+
+jualOverride[index]=defaultData[index].gram*currentPrice;
+
+}
+
+}else{
+
+let i=index-defaultData.length;
+
+userData[i].status=value;
+
+if(value=="SOLD" && !userData[i].jual){
+
+userData[i].jual=userData[i].gram*currentPrice;
+
+}
+
+}
+
+saveAll();
+renderTable();
+calculate();
+
+}
+
+
+// UPDATE JUAL
+
+function updateJual(index,value){
+
+value=parseFloat(value)||0;
+
+if(index<defaultData.length){
+
+jualOverride[index]=value;
+
+}else{
+
+userData[index-defaultData.length].jual=value;
+
+}
+
+saveAll();
+calculate();
+
+}
+
+
+// DELETE USER DATA
 
 function deleteUserData(index){
-    userData.splice(index,1);
-    saveUserData();
-    renderTable();
-    calculate();
+
+userData.splice(index,1);
+
+saveAll();
+renderTable();
+calculate();
+
 }
+
+
+// RENDER TABLE
 
 function renderTable(){
 
-    let allData = getAllData();
-    let tbody = document.getElementById("tableBody");
-    tbody.innerHTML = "";
+let data=getAllData();
+let tbody=document.getElementById("tableBody");
+tbody.innerHTML="";
 
-    allData.forEach((item,i)=>{
+data.forEach((item,i)=>{
 
-        let isDefault = i < defaultData.length;
+let profit=item.jual-item.beli;
 
-        tbody.innerHTML += `
-        <tr>
-            <td>${i+1}</td>
-            <td>${item.gram}</td>
-            <td>${item.type}</td>
-            <td>Rp ${item.beli.toLocaleString("id-ID")}</td>
-            <td>${item.jual ? "Rp "+item.jual.toLocaleString("id-ID") : "-"}</td>
-            <td>${item.status}</td>
-            <td>
-                ${isDefault ? "🔒" : `<button onclick="deleteUserData(${i-defaultData.length})">Hapus</button>`}
-            </td>
-        </tr>
-        `;
-    });
+let profitClass=profit>0?"green":profit<0?"red":"gray";
+
+let isSold=item.status=="SOLD";
+
+tbody.innerHTML+=`
+
+<tr>
+
+<td>${i+1}</td>
+
+<td>${item.gram}</td>
+
+<td>${item.type}</td>
+
+<td>Rp ${item.beli.toLocaleString("id-ID")}</td>
+
+<td>
+
+<input type="number"
+
+value="${item.jual||""}"
+
+${isSold?"":"disabled"}
+
+onchange="updateJual(${i},this.value)">
+
+</td>
+
+<td>
+
+<select onchange="updateStatus(${i},this.value)">
+
+<option ${item.status=="READY"?"selected":""}>READY</option>
+<option ${item.status=="PO"?"selected":""}>PO</option>
+<option ${item.status=="SOLD"?"selected":""}>SOLD</option>
+
+</select>
+
+</td>
+
+<td class="${profitClass}">
+
+${isSold?"Rp "+profit.toLocaleString("id-ID"):"-"}
+
+</td>
+
+<td>
+
+${i<defaultData.length?"🔒":`<button onclick="deleteUserData(${i-defaultData.length})">Hapus</button>`}
+
+</td>
+
+</tr>
+
+`;
+
+});
+
 }
+
+
+// CALCULATE
 
 function calculate(){
 
-    let currentPrice = parseFloat(document.getElementById("currentPrice").value);
-    let allData = getAllData();
+let price=parseFloat(document.getElementById("currentPrice").value);
 
-    let modalAktif = 0;
-    let realizedProfit = 0;
-    let gramAktif = 0;
-    let portfolioValue = 0;
-    let statusCount = { SOLD:0, READY:0, PO:0 };
+let data=getAllData();
 
-    allData.forEach(item=>{
+let modal=0;
+let profit=0;
+let gram=0;
+let value=0;
 
-        statusCount[item.status]++;
+let statusCount={READY:0,PO:0,SOLD:0};
 
-        if(item.status !== "SOLD"){
-            modalAktif += item.beli;
-            gramAktif += item.gram;
-            portfolioValue += item.gram * currentPrice;
-        }
+data.forEach(item=>{
 
-        if(item.status === "SOLD"){
-            realizedProfit += (item.jual - item.beli);
-        }
-    });
+statusCount[item.status]++;
 
-    let unrealized = portfolioValue - modalAktif;
+if(item.status!="SOLD"){
 
-    document.getElementById("modal").innerHTML =
-        "Rp " + modalAktif.toLocaleString("id-ID");
+modal+=item.beli;
+gram+=item.gram;
+value+=item.gram*price;
 
-    document.getElementById("profit").innerHTML =
-        "Rp " + realizedProfit.toLocaleString("id-ID");
+}else{
 
-    document.getElementById("gramTotal").innerHTML =
-        gramAktif + " gram";
+profit+=item.jual-item.beli;
 
-    document.getElementById("portfolio").innerHTML =
-        "Rp " + portfolioValue.toLocaleString("id-ID");
-
-    document.getElementById("unreal").innerHTML =
-        `<span class="${unrealized >= 0 ? 'green':'red'}">
-        Rp ${unrealized.toLocaleString("id-ID")}
-        </span>`;
-
-    if(myChart){ myChart.destroy(); }
-
-    myChart = new Chart(document.getElementById("statusChart"), {
-        type:'doughnut',
-        data:{
-            labels:Object.keys(statusCount),
-            datasets:[{
-                data:Object.values(statusCount),
-                backgroundColor:["#3498db","#2ecc71","#f39c12"]
-            }]
-        },
-        options:{ responsive:true, maintainAspectRatio:false }
-    });
 }
+
+});
+
+let unreal=value-modal;
+
+document.getElementById("modal").innerHTML="Rp "+modal.toLocaleString("id-ID");
+document.getElementById("profit").innerHTML="Rp "+profit.toLocaleString("id-ID");
+document.getElementById("gramTotal").innerHTML=gram+" gram";
+document.getElementById("portfolio").innerHTML="Rp "+value.toLocaleString("id-ID");
+
+document.getElementById("unreal").innerHTML=
+`<span class="${unreal>=0?"green":"red"}">Rp ${unreal.toLocaleString("id-ID")}</span>`;
+
+
+if(myChart)myChart.destroy();
+
+myChart=new Chart(document.getElementById("statusChart"),{
+
+type:"doughnut",
+
+data:{
+labels:Object.keys(statusCount),
+datasets:[{
+data:Object.values(statusCount),
+backgroundColor:["#2ecc71","#f39c12","#3498db"]
+}]
+},
+
+options:{responsive:true,maintainAspectRatio:false}
+
+});
+
+}
+
 
 renderTable();
 calculate();
