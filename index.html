@@ -123,8 +123,6 @@ Harga emas per gram:
 
 <p>Total Gram Aktif: <span id="gramTotal"></span></p>
 
-<p>Nilai Portfolio: <span id="portfolio"></span></p>
-
 <p>Unrealized P/L: <span id="unreal"></span></p>
 
 </div>
@@ -512,9 +510,6 @@ totalGramAktif += d.gram;
 }
 
 });
-
-nilaiPortfolio =
-totalGramAktif * price;
 
 let unrealized =
 nilaiPortfolio - totalModalAktif;
