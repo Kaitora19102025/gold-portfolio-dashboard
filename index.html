@@ -61,13 +61,15 @@ height:320px;
 margin:auto;
 }
 
+.lock{color:gray;}
+
 </style>
 </head>
 <body>
 
 <h1>🪙 Gold Portfolio Dashboard</h1>
 
-<!-- INPUT -->
+<!-- INPUT DATA -->
 <div class="card">
 
 <h3>Tambah Transaksi</h3>
@@ -111,10 +113,10 @@ Harga emas per gram:
 <!-- CHART -->
 <div class="card">
 
-<h3>Komposisi Status</h3>
+<h3>Status Distribution</h3>
 
 <div class="chart-container">
-<canvas id="statusChart"></canvas>
+<canvas id="chart"></canvas>
 </div>
 
 </div>
@@ -141,7 +143,7 @@ Harga emas per gram:
 
 </thead>
 
-<tbody id="tableBody"></tbody>
+<tbody id="tbody"></tbody>
 
 </table>
 
@@ -149,7 +151,7 @@ Harga emas per gram:
 
 <script>
 
-// DEFAULT DATA
+// ===== DEFAULT DATA =====
 
 const defaultData=[
 {gram:5,type:"LM",beli:13500000,jual:15700000,status:"SOLD"},
@@ -164,76 +166,88 @@ const defaultData=[
 {gram:8,type:"LM IMLEK 2026",beli:24447300,jual:0,status:"READY"}
 ];
 
+
+// ===== STORAGE =====
+
 let userData=JSON.parse(localStorage.getItem("userData"))||[];
-let statusOverride=JSON.parse(localStorage.getItem("statusOverride"))||{};
-let jualOverride=JSON.parse(localStorage.getItem("jualOverride"))||{};
 
-let myChart;
+let defaultOverride=JSON.parse(localStorage.getItem("defaultOverride"))||[];
+
+let chart;
 
 
-// GET ALL DATA
+// ===== GET ALL DATA =====
 
-function getAllData(){
+function getData(){
 
-return defaultData.map((item,i)=>({
+let merged=[...defaultData];
 
-...item,
+defaultOverride.forEach((override,i)=>{
 
-status:statusOverride[i]||item.status,
+merged[i]={...merged[i],...override};
 
-jual:jualOverride[i]??item.jual
+});
 
-})).concat(userData);
+return [...merged,...userData];
 
 }
 
 
-// SAVE
+// ===== SAVE =====
 
-function saveAll(){
+function save(){
 
 localStorage.setItem("userData",JSON.stringify(userData));
-localStorage.setItem("statusOverride",JSON.stringify(statusOverride));
-localStorage.setItem("jualOverride",JSON.stringify(jualOverride));
+
+localStorage.setItem("defaultOverride",JSON.stringify(defaultOverride));
 
 }
 
 
-// ADD DATA
+// ===== ADD DATA =====
 
 function addData(){
 
-let gram=parseFloat(document.getElementById("gram").value);
-let type=document.getElementById("type").value;
-let beli=parseFloat(document.getElementById("beli").value);
-let status=document.getElementById("status").value;
+let gram=parseFloat(gramInput.value);
 
-let currentPrice=parseFloat(document.getElementById("currentPrice").value);
+let type=typeInput.value;
 
-let jual=status=="SOLD"?gram*currentPrice:0;
+let beli=parseFloat(beliInput.value);
+
+let status=statusInput.value;
+
+let price=parseFloat(currentPrice.value);
+
+let jual=status=="SOLD"?gram*price:0;
 
 userData.push({gram,type,beli,jual,status});
 
-saveAll();
-renderTable();
+save();
+
+render();
+
 calculate();
 
 }
 
 
-// UPDATE STATUS
+// ===== UPDATE STATUS =====
 
 function updateStatus(index,value){
 
-let currentPrice=parseFloat(document.getElementById("currentPrice").value);
+let price=parseFloat(currentPrice.value);
+
+let data=getData()[index];
 
 if(index<defaultData.length){
 
-statusOverride[index]=value;
+defaultOverride[index]=defaultOverride[index]||{};
 
-if(value=="SOLD" && !jualOverride[index]){
+defaultOverride[index].status=value;
 
-jualOverride[index]=defaultData[index].gram*currentPrice;
+if(value=="SOLD"&&!defaultOverride[index].jual){
+
+defaultOverride[index].jual=data.gram*price;
 
 }
 
@@ -243,22 +257,24 @@ let i=index-defaultData.length;
 
 userData[i].status=value;
 
-if(value=="SOLD" && !userData[i].jual){
+if(value=="SOLD"&&!userData[i].jual){
 
-userData[i].jual=userData[i].gram*currentPrice;
-
-}
+userData[i].jual=data.gram*price;
 
 }
 
-saveAll();
-renderTable();
+}
+
+save();
+
+render();
+
 calculate();
 
 }
 
 
-// UPDATE JUAL
+// ===== UPDATE JUAL =====
 
 function updateJual(index,value){
 
@@ -266,7 +282,9 @@ value=parseFloat(value)||0;
 
 if(index<defaultData.length){
 
-jualOverride[index]=value;
+defaultOverride[index]=defaultOverride[index]||{};
+
+defaultOverride[index].jual=value;
 
 }else{
 
@@ -274,40 +292,41 @@ userData[index-defaultData.length].jual=value;
 
 }
 
-saveAll();
+save();
+
 calculate();
 
 }
 
 
-// DELETE USER DATA
+// ===== DELETE USER DATA =====
 
-function deleteUserData(index){
+function deleteData(index){
 
 userData.splice(index,1);
 
-saveAll();
-renderTable();
+save();
+
+render();
+
 calculate();
 
 }
 
 
-// RENDER TABLE
+// ===== RENDER =====
 
-function renderTable(){
+function render(){
 
-let data=getAllData();
-let tbody=document.getElementById("tableBody");
+let data=getData();
+
 tbody.innerHTML="";
 
-data.forEach((item,i)=>{
+data.forEach((d,i)=>{
 
-let profit=item.jual-item.beli;
+let profit=d.status=="SOLD"?d.jual-d.beli:null;
 
-let profitClass=profit>0?"green":profit<0?"red":"gray";
-
-let isSold=item.status=="SOLD";
+let cls=profit>0?"green":profit<0?"red":"gray";
 
 tbody.innerHTML+=`
 
@@ -315,19 +334,19 @@ tbody.innerHTML+=`
 
 <td>${i+1}</td>
 
-<td>${item.gram}</td>
+<td>${d.gram}</td>
 
-<td>${item.type}</td>
+<td>${d.type}</td>
 
-<td>Rp ${item.beli.toLocaleString("id-ID")}</td>
+<td>Rp ${d.beli.toLocaleString("id-ID")}</td>
 
 <td>
 
 <input type="number"
 
-value="${item.jual||""}"
+value="${d.jual||""}"
 
-${isSold?"":"disabled"}
+${d.status!="SOLD"?"disabled":""}
 
 onchange="updateJual(${i},this.value)">
 
@@ -337,23 +356,23 @@ onchange="updateJual(${i},this.value)">
 
 <select onchange="updateStatus(${i},this.value)">
 
-<option ${item.status=="READY"?"selected":""}>READY</option>
-<option ${item.status=="PO"?"selected":""}>PO</option>
-<option ${item.status=="SOLD"?"selected":""}>SOLD</option>
+<option ${d.status=="READY"?"selected":""}>READY</option>
+<option ${d.status=="PO"?"selected":""}>PO</option>
+<option ${d.status=="SOLD"?"selected":""}>SOLD</option>
 
 </select>
 
 </td>
 
-<td class="${profitClass}">
+<td class="${cls}">
 
-${isSold?"Rp "+profit.toLocaleString("id-ID"):"-"}
+${profit!=null?"Rp "+profit.toLocaleString("id-ID"):"-"}
 
 </td>
 
 <td>
 
-${i<defaultData.length?"🔒":`<button onclick="deleteUserData(${i-defaultData.length})">Hapus</button>`}
+${i<defaultData.length?'<span class="lock">🔒</span>':`<button onclick="deleteData(${i-defaultData.length})">Hapus</button>`}
 
 </td>
 
@@ -366,34 +385,33 @@ ${i<defaultData.length?"🔒":`<button onclick="deleteUserData(${i-defaultData.l
 }
 
 
-// CALCULATE
+// ===== CALCULATE =====
 
 function calculate(){
 
-let price=parseFloat(document.getElementById("currentPrice").value);
+let price=parseFloat(currentPrice.value);
 
-let data=getAllData();
+let data=getData();
 
-let modal=0;
-let profit=0;
-let gram=0;
-let value=0;
+let modal=0,profit=0,gram=0,value=0;
 
 let statusCount={READY:0,PO:0,SOLD:0};
 
-data.forEach(item=>{
+data.forEach(d=>{
 
-statusCount[item.status]++;
+statusCount[d.status]++;
 
-if(item.status!="SOLD"){
+if(d.status!="SOLD"){
 
-modal+=item.beli;
-gram+=item.gram;
-value+=item.gram*price;
+modal+=d.beli;
+
+gram+=d.gram;
+
+value+=d.gram*price;
 
 }else{
 
-profit+=item.jual-item.beli;
+profit+=d.jual-d.beli;
 
 }
 
@@ -401,27 +419,34 @@ profit+=item.jual-item.beli;
 
 let unreal=value-modal;
 
-document.getElementById("modal").innerHTML="Rp "+modal.toLocaleString("id-ID");
-document.getElementById("profit").innerHTML="Rp "+profit.toLocaleString("id-ID");
-document.getElementById("gramTotal").innerHTML=gram+" gram";
-document.getElementById("portfolio").innerHTML="Rp "+value.toLocaleString("id-ID");
+modal.innerHTML="Rp "+modal.toLocaleString("id-ID");
 
-document.getElementById("unreal").innerHTML=
-`<span class="${unreal>=0?"green":"red"}">Rp ${unreal.toLocaleString("id-ID")}</span>`;
+profit.innerHTML="Rp "+profit.toLocaleString("id-ID");
 
+gramTotal.innerHTML=gram+" gram";
 
-if(myChart)myChart.destroy();
+portfolio.innerHTML="Rp "+value.toLocaleString("id-ID");
 
-myChart=new Chart(document.getElementById("statusChart"),{
+unreal.innerHTML=`<span class="${unreal>=0?"green":"red"}">Rp ${unreal.toLocaleString("id-ID")}</span>`;
+
+if(chart)chart.destroy();
+
+chart=new Chart(document.getElementById("chart"),{
 
 type:"doughnut",
 
 data:{
+
 labels:Object.keys(statusCount),
+
 datasets:[{
+
 data:Object.values(statusCount),
+
 backgroundColor:["#2ecc71","#f39c12","#3498db"]
+
 }]
+
 },
 
 options:{responsive:true,maintainAspectRatio:false}
@@ -431,7 +456,8 @@ options:{responsive:true,maintainAspectRatio:false}
 }
 
 
-renderTable();
+render();
+
 calculate();
 
 </script>
