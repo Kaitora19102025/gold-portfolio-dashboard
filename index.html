@@ -37,6 +37,10 @@ color:white;
 cursor:pointer;
 }
 
+button:hover{
+background:#a47508;
+}
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -51,8 +55,8 @@ text-align:right;
 th:first-child,td:first-child{text-align:center;}
 th:nth-child(3),td:nth-child(3){text-align:left;}
 
-.green{color:green;font-weight:bold;}
-.red{color:red;font-weight:bold;}
+.green{color:#0a8f3d;font-weight:bold;}
+.red{color:#c0392b;font-weight:bold;}
 .gray{color:gray;}
 
 .chart-container{
@@ -69,15 +73,21 @@ margin:auto;
 
 <h1>🪙 Gold Portfolio Dashboard</h1>
 
-<!-- INPUT DATA -->
+<!-- INPUT -->
 <div class="card">
 
 <h3>Tambah Transaksi</h3>
 
-<input type="number" id="gram" placeholder="Gram">
-<input type="text" id="type" placeholder="Type">
-<input type="number" id="beli" placeholder="Harga Beli">
+Gram:
+<input type="number" id="gram">
 
+Type:
+<input type="text" id="type">
+
+Harga Beli:
+<input type="number" id="beli">
+
+Status:
 <select id="status">
 <option value="READY">READY</option>
 <option value="PO">PO</option>
@@ -103,9 +113,13 @@ Harga emas per gram:
 <div class="card">
 
 <p>Total Modal Aktif: <span id="modal"></span></p>
+
 <p>Total Realized Profit: <span id="profit"></span></p>
+
 <p>Total Gram Aktif: <span id="gramTotal"></span></p>
-<p>Nilai Portofolio: <span id="portfolio"></span></p>
+
+<p>Nilai Portfolio: <span id="portfolio"></span></p>
+
 <p>Unrealized P/L: <span id="unreal"></span></p>
 
 </div>
@@ -151,7 +165,7 @@ Harga emas per gram:
 
 <script>
 
-// ===== DEFAULT DATA =====
+// ===== DATA AWAL =====
 
 const defaultData=[
 {gram:5,type:"LM",beli:13500000,jual:15700000,status:"SOLD"},
@@ -169,22 +183,37 @@ const defaultData=[
 
 // ===== STORAGE =====
 
-let userData=JSON.parse(localStorage.getItem("userData"))||[];
+let userData=
+JSON.parse(localStorage.getItem("userData"))||[];
 
-let defaultOverride=JSON.parse(localStorage.getItem("defaultOverride"))||[];
+let defaultOverride=
+JSON.parse(localStorage.getItem("defaultOverride"))||[];
 
 let chart;
 
 
-// ===== GET ALL DATA =====
+// ===== SAVE =====
+
+function save(){
+
+localStorage.setItem("userData",
+JSON.stringify(userData));
+
+localStorage.setItem("defaultOverride",
+JSON.stringify(defaultOverride));
+
+}
+
+
+// ===== GET DATA =====
 
 function getData(){
 
 let merged=[...defaultData];
 
-defaultOverride.forEach((override,i)=>{
+defaultOverride.forEach((o,i)=>{
 
-merged[i]={...merged[i],...override};
+merged[i]={...merged[i],...o};
 
 });
 
@@ -193,34 +222,31 @@ return [...merged,...userData];
 }
 
 
-// ===== SAVE =====
-
-function save(){
-
-localStorage.setItem("userData",JSON.stringify(userData));
-
-localStorage.setItem("defaultOverride",JSON.stringify(defaultOverride));
-
-}
-
-
 // ===== ADD DATA =====
 
 function addData(){
 
-let gram=parseFloat(gramInput.value);
+let gram=parseFloat(
+document.getElementById("gram").value);
 
-let type=typeInput.value;
+let type=
+document.getElementById("type").value;
 
-let beli=parseFloat(beliInput.value);
+let beli=parseFloat(
+document.getElementById("beli").value);
 
-let status=statusInput.value;
+let status=
+document.getElementById("status").value;
 
-let price=parseFloat(currentPrice.value);
+let price=parseFloat(
+document.getElementById("currentPrice").value);
 
-let jual=status=="SOLD"?gram*price:0;
+let jual=
+status=="SOLD"?gram*price:0;
 
-userData.push({gram,type,beli,jual,status});
+userData.push({
+gram,type,beli,jual,status
+});
 
 save();
 
@@ -235,19 +261,22 @@ calculate();
 
 function updateStatus(index,value){
 
-let price=parseFloat(currentPrice.value);
+let price=parseFloat(
+document.getElementById("currentPrice").value);
 
-let data=getData()[index];
+let d=getData()[index];
 
 if(index<defaultData.length){
 
-defaultOverride[index]=defaultOverride[index]||{};
+defaultOverride[index]=
+defaultOverride[index]||{};
 
 defaultOverride[index].status=value;
 
 if(value=="SOLD"&&!defaultOverride[index].jual){
 
-defaultOverride[index].jual=data.gram*price;
+defaultOverride[index].jual=
+d.gram*price;
 
 }
 
@@ -259,7 +288,8 @@ userData[i].status=value;
 
 if(value=="SOLD"&&!userData[i].jual){
 
-userData[i].jual=data.gram*price;
+userData[i].jual=
+d.gram*price;
 
 }
 
@@ -282,24 +312,37 @@ value=parseFloat(value)||0;
 
 if(index<defaultData.length){
 
-defaultOverride[index]=defaultOverride[index]||{};
+defaultOverride[index]=
+defaultOverride[index]||{};
 
 defaultOverride[index].jual=value;
 
+if(value>0){
+defaultOverride[index].status="SOLD";
+}
+
 }else{
 
-userData[index-defaultData.length].jual=value;
+let i=index-defaultData.length;
+
+userData[i].jual=value;
+
+if(value>0){
+userData[i].status="SOLD";
+}
 
 }
 
 save();
+
+render();
 
 calculate();
 
 }
 
 
-// ===== DELETE USER DATA =====
+// ===== DELETE =====
 
 function deleteData(index){
 
@@ -314,19 +357,25 @@ calculate();
 }
 
 
-// ===== RENDER =====
+// ===== RENDER TABLE =====
 
 function render(){
 
 let data=getData();
 
+let tbody=
+document.getElementById("tbody");
+
 tbody.innerHTML="";
 
 data.forEach((d,i)=>{
 
-let profit=d.status=="SOLD"?d.jual-d.beli:null;
+let profit=
+d.status=="SOLD"?d.jual-d.beli:null;
 
-let cls=profit>0?"green":profit<0?"red":"gray";
+let cls=
+profit>0?"green":
+profit<0?"red":"gray";
 
 tbody.innerHTML+=`
 
@@ -341,24 +390,26 @@ tbody.innerHTML+=`
 <td>Rp ${d.beli.toLocaleString("id-ID")}</td>
 
 <td>
-
 <input type="number"
-
 value="${d.jual||""}"
-
-${d.status!="SOLD"?"disabled":""}
-
 onchange="updateJual(${i},this.value)">
-
 </td>
 
 <td>
 
 <select onchange="updateStatus(${i},this.value)">
 
-<option ${d.status=="READY"?"selected":""}>READY</option>
-<option ${d.status=="PO"?"selected":""}>PO</option>
-<option ${d.status=="SOLD"?"selected":""}>SOLD</option>
+<option ${d.status=="READY"?"selected":""}>
+READY
+</option>
+
+<option ${d.status=="PO"?"selected":""}>
+PO
+</option>
+
+<option ${d.status=="SOLD"?"selected":""}>
+SOLD
+</option>
 
 </select>
 
@@ -366,13 +417,18 @@ onchange="updateJual(${i},this.value)">
 
 <td class="${cls}">
 
-${profit!=null?"Rp "+profit.toLocaleString("id-ID"):"-"}
+${profit!=null?
+"Rp "+profit.toLocaleString("id-ID")
+:"-"}
 
 </td>
 
 <td>
 
-${i<defaultData.length?'<span class="lock">🔒</span>':`<button onclick="deleteData(${i-defaultData.length})">Hapus</button>`}
+${i<defaultData.length
+?'<span class="lock">🔒</span>'
+:`<button onclick="deleteData(${i-defaultData.length})">
+Hapus</button>`}
 
 </td>
 
@@ -389,13 +445,19 @@ ${i<defaultData.length?'<span class="lock">🔒</span>':`<button onclick="delete
 
 function calculate(){
 
-let price=parseFloat(currentPrice.value);
+let price=parseFloat(
+document.getElementById("currentPrice").value);
 
 let data=getData();
 
-let modal=0,profit=0,gram=0,value=0;
+let modal=0;
+let realized=0;
+let gram=0;
+let value=0;
 
-let statusCount={READY:0,PO:0,SOLD:0};
+let statusCount={
+READY:0,PO:0,SOLD:0
+};
 
 data.forEach(d=>{
 
@@ -404,14 +466,12 @@ statusCount[d.status]++;
 if(d.status!="SOLD"){
 
 modal+=d.beli;
-
 gram+=d.gram;
-
 value+=d.gram*price;
 
 }else{
 
-profit+=d.jual-d.beli;
+realized+=d.jual-d.beli;
 
 }
 
@@ -419,38 +479,45 @@ profit+=d.jual-d.beli;
 
 let unreal=value-modal;
 
-modal.innerHTML="Rp "+modal.toLocaleString("id-ID");
+document.getElementById("modal").innerHTML=
+"Rp "+modal.toLocaleString("id-ID");
 
-profit.innerHTML="Rp "+profit.toLocaleString("id-ID");
+document.getElementById("profit").innerHTML=
+"Rp "+realized.toLocaleString("id-ID");
 
-gramTotal.innerHTML=gram+" gram";
+document.getElementById("gramTotal").innerHTML=
+gram+" gram";
 
-portfolio.innerHTML="Rp "+value.toLocaleString("id-ID");
+document.getElementById("portfolio").innerHTML=
+"Rp "+value.toLocaleString("id-ID");
 
-unreal.innerHTML=`<span class="${unreal>=0?"green":"red"}">Rp ${unreal.toLocaleString("id-ID")}</span>`;
+document.getElementById("unreal").innerHTML=
+`<span class="${unreal>=0?"green":"red"}">
+Rp ${unreal.toLocaleString("id-ID")}
+</span>`;
+
 
 if(chart)chart.destroy();
 
-chart=new Chart(document.getElementById("chart"),{
-
+chart=new Chart(
+document.getElementById("chart"),
+{
 type:"doughnut",
-
 data:{
-
 labels:Object.keys(statusCount),
-
 datasets:[{
-
 data:Object.values(statusCount),
-
-backgroundColor:["#2ecc71","#f39c12","#3498db"]
-
+backgroundColor:[
+"#2ecc71",
+"#f39c12",
+"#3498db"
+]
 }]
-
 },
-
-options:{responsive:true,maintainAspectRatio:false}
-
+options:{
+responsive:true,
+maintainAspectRatio:false
+}
 });
 
 }
