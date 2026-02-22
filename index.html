@@ -26,6 +26,7 @@ input,select{
 padding:6px;
 border-radius:6px;
 border:1px solid #ccc;
+margin:4px;
 }
 
 button{
@@ -65,7 +66,9 @@ height:320px;
 margin:auto;
 }
 
-.lock{color:gray;}
+.lock{
+color:gray;
+}
 
 </style>
 </head>
@@ -73,7 +76,7 @@ margin:auto;
 
 <h1>🪙 Gold Portfolio Dashboard</h1>
 
-<!-- INPUT -->
+<!-- INPUT DATA -->
 <div class="card">
 
 <h3>Tambah Transaksi</h3>
@@ -98,6 +101,7 @@ Status:
 
 </div>
 
+
 <!-- GOLD PRICE -->
 <div class="card">
 
@@ -108,6 +112,7 @@ Harga emas per gram:
 <button onclick="calculate()">Update</button>
 
 </div>
+
 
 <!-- SUMMARY -->
 <div class="card">
@@ -124,6 +129,7 @@ Harga emas per gram:
 
 </div>
 
+
 <!-- CHART -->
 <div class="card">
 
@@ -134,6 +140,7 @@ Harga emas per gram:
 </div>
 
 </div>
+
 
 <!-- TABLE -->
 <div class="card">
@@ -163,11 +170,15 @@ Harga emas per gram:
 
 </div>
 
+
 <script>
 
-// ===== DATA AWAL =====
+// ======================
+// DATA AWAL (TERKUNCI)
+// ======================
 
 const defaultData=[
+
 {gram:5,type:"LM",beli:13500000,jual:15700000,status:"SOLD"},
 {gram:8,type:"LM IMLEK 2026",beli:23950800,jual:26500000,status:"SOLD"},
 {gram:2,type:"LM",beli:5676000,jual:0,status:"PO"},
@@ -178,34 +189,45 @@ const defaultData=[
 {gram:0.5,type:"LM WEDDING COUPLE",beli:1606500,jual:0,status:"READY"},
 {gram:0.5,type:"LM BABY BOY",beli:1606500,jual:0,status:"READY"},
 {gram:8,type:"LM IMLEK 2026",beli:24447300,jual:0,status:"READY"}
+
 ];
 
 
-// ===== STORAGE =====
+// ======================
+// STORAGE
+// ======================
 
-let userData=
-JSON.parse(localStorage.getItem("userData"))||[];
+let userData =
+JSON.parse(localStorage.getItem("userData")) || [];
 
-let defaultOverride=
-JSON.parse(localStorage.getItem("defaultOverride"))||[];
+let defaultOverride =
+JSON.parse(localStorage.getItem("defaultOverride")) || [];
 
 let chart;
 
 
-// ===== SAVE =====
+// ======================
+// SAVE
+// ======================
 
 function save(){
 
-localStorage.setItem("userData",
-JSON.stringify(userData));
+localStorage.setItem(
+"userData",
+JSON.stringify(userData)
+);
 
-localStorage.setItem("defaultOverride",
-JSON.stringify(defaultOverride));
+localStorage.setItem(
+"defaultOverride",
+JSON.stringify(defaultOverride)
+);
 
 }
 
 
-// ===== GET DATA =====
+// ======================
+// GET DATA
+// ======================
 
 function getData(){
 
@@ -222,27 +244,29 @@ return [...merged,...userData];
 }
 
 
-// ===== ADD DATA =====
+// ======================
+// ADD DATA
+// ======================
 
 function addData(){
 
-let gram=parseFloat(
-document.getElementById("gram").value);
+let gram =
+parseFloat(document.getElementById("gram").value);
 
-let type=
+let type =
 document.getElementById("type").value;
 
-let beli=parseFloat(
-document.getElementById("beli").value);
+let beli =
+parseFloat(document.getElementById("beli").value);
 
-let status=
+let status =
 document.getElementById("status").value;
 
-let price=parseFloat(
-document.getElementById("currentPrice").value);
+let price =
+parseFloat(document.getElementById("currentPrice").value);
 
-let jual=
-status=="SOLD"?gram*price:0;
+let jual =
+status=="SOLD"? gram*price : 0;
 
 userData.push({
 gram,type,beli,jual,status
@@ -257,26 +281,30 @@ calculate();
 }
 
 
-// ===== UPDATE STATUS =====
+// ======================
+// UPDATE STATUS
+// ======================
 
 function updateStatus(index,value){
 
-let price=parseFloat(
-document.getElementById("currentPrice").value);
+let price =
+parseFloat(document.getElementById("currentPrice").value);
 
-let d=getData()[index];
+let d =
+getData()[index];
 
 if(index<defaultData.length){
 
-defaultOverride[index]=
-defaultOverride[index]||{};
+defaultOverride[index] =
+defaultOverride[index] || {};
 
 defaultOverride[index].status=value;
 
-if(value=="SOLD"&&!defaultOverride[index].jual){
+if(value=="SOLD" &&
+!defaultOverride[index].jual){
 
-defaultOverride[index].jual=
-d.gram*price;
+defaultOverride[index].jual =
+d.gram * price;
 
 }
 
@@ -286,10 +314,11 @@ let i=index-defaultData.length;
 
 userData[i].status=value;
 
-if(value=="SOLD"&&!userData[i].jual){
+if(value=="SOLD" &&
+!userData[i].jual){
 
-userData[i].jual=
-d.gram*price;
+userData[i].jual =
+d.gram * price;
 
 }
 
@@ -304,7 +333,9 @@ calculate();
 }
 
 
-// ===== UPDATE JUAL =====
+// ======================
+// UPDATE JUAL
+// ======================
 
 function updateJual(index,value){
 
@@ -312,8 +343,8 @@ value=parseFloat(value)||0;
 
 if(index<defaultData.length){
 
-defaultOverride[index]=
-defaultOverride[index]||{};
+defaultOverride[index] =
+defaultOverride[index] || {};
 
 defaultOverride[index].jual=value;
 
@@ -342,7 +373,9 @@ calculate();
 }
 
 
-// ===== DELETE =====
+// ======================
+// DELETE DATA BARU
+// ======================
 
 function deleteData(index){
 
@@ -357,27 +390,30 @@ calculate();
 }
 
 
-// ===== RENDER TABLE =====
+// ======================
+// RENDER TABLE
+// ======================
 
 function render(){
 
 let data=getData();
 
-let tbody=
+let tbody =
 document.getElementById("tbody");
 
 tbody.innerHTML="";
 
 data.forEach((d,i)=>{
 
-let profit=
-d.status=="SOLD"?d.jual-d.beli:null;
+let profit =
+d.status=="SOLD" ?
+d.jual-d.beli : null;
 
-let cls=
-profit>0?"green":
-profit<0?"red":"gray";
+let cls =
+profit>0 ? "green" :
+profit<0 ? "red" : "gray";
 
-tbody.innerHTML+=`
+tbody.innerHTML += `
 
 <tr>
 
@@ -396,7 +432,6 @@ onchange="updateJual(${i},this.value)">
 </td>
 
 <td>
-
 <select onchange="updateStatus(${i},this.value)">
 
 <option ${d.status=="READY"?"selected":""}>
@@ -412,24 +447,19 @@ SOLD
 </option>
 
 </select>
-
 </td>
 
 <td class="${cls}">
-
-${profit!=null?
+${profit!=null ?
 "Rp "+profit.toLocaleString("id-ID")
 :"-"}
-
 </td>
 
 <td>
-
 ${i<defaultData.length
-?'<span class="lock">🔒</span>'
-:`<button onclick="deleteData(${i-defaultData.length})">
+? '<span class="lock">🔒</span>'
+: `<button onclick="deleteData(${i-defaultData.length})">
 Hapus</button>`}
-
 </td>
 
 </tr>
@@ -441,63 +471,78 @@ Hapus</button>`}
 }
 
 
-// ===== CALCULATE =====
+// ======================
+// CALCULATE (FIXED)
+// ======================
 
 function calculate(){
 
-let price=parseFloat(
-document.getElementById("currentPrice").value);
+let price =
+parseFloat(document.getElementById("currentPrice").value);
 
-let data=getData();
+let data =
+getData();
 
-let modal=0;
-let realized=0;
-let gram=0;
-let value=0;
+let totalModalAktif=0;
+let totalRealizedProfit=0;
+let totalGramAktif=0;
+let nilaiPortfolio=0;
 
 let statusCount={
-READY:0,PO:0,SOLD:0
+READY:0,
+PO:0,
+SOLD:0
 };
 
 data.forEach(d=>{
 
 statusCount[d.status]++;
 
-if(d.status!="SOLD"){
+if(d.status=="SOLD"){
 
-modal+=d.beli;
-gram+=d.gram;
-value+=d.gram*price;
+totalRealizedProfit +=
+(d.jual||0)-d.beli;
 
 }else{
 
-realized+=d.jual-d.beli;
+totalModalAktif += d.beli;
+
+totalGramAktif += d.gram;
 
 }
 
 });
 
-let unreal=value-modal;
+nilaiPortfolio =
+totalGramAktif * price;
 
-document.getElementById("modal").innerHTML=
-"Rp "+modal.toLocaleString("id-ID");
+let unrealized =
+nilaiPortfolio - totalModalAktif;
 
-document.getElementById("profit").innerHTML=
-"Rp "+realized.toLocaleString("id-ID");
 
-document.getElementById("gramTotal").innerHTML=
-gram+" gram";
+// UPDATE UI
 
-document.getElementById("portfolio").innerHTML=
-"Rp "+value.toLocaleString("id-ID");
+document.getElementById("modal").innerHTML =
+"Rp " + totalModalAktif.toLocaleString("id-ID");
 
-document.getElementById("unreal").innerHTML=
-`<span class="${unreal>=0?"green":"red"}">
-Rp ${unreal.toLocaleString("id-ID")}
+document.getElementById("profit").innerHTML =
+"Rp " + totalRealizedProfit.toLocaleString("id-ID");
+
+document.getElementById("gramTotal").innerHTML =
+totalGramAktif + " gram";
+
+document.getElementById("portfolio").innerHTML =
+"Rp " + nilaiPortfolio.toLocaleString("id-ID");
+
+document.getElementById("unreal").innerHTML =
+`<span class="${unrealized>=0?'green':'red'}">
+Rp ${unrealized.toLocaleString("id-ID")}
 </span>`;
 
 
-if(chart)chart.destroy();
+// CHART
+
+if(chart) chart.destroy();
 
 chart=new Chart(
 document.getElementById("chart"),
@@ -523,8 +568,9 @@ maintainAspectRatio:false
 }
 
 
-render();
+// INIT
 
+render();
 calculate();
 
 </script>
