@@ -5,96 +5,32 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
-body{
-font-family:Arial;
-background:#f4f6f9;
-padding:20px;
-}
-
-h1{color:#b8860b;}
-
-.card{
-background:white;
-padding:20px;
-margin-bottom:20px;
-border-radius:12px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-input,select{
-padding:6px;
-border-radius:6px;
-border:1px solid #ccc;
-margin:4px;
-}
-
-button{
-padding:6px 12px;
-border:none;
-border-radius:6px;
-background:#b8860b;
-color:white;
-cursor:pointer;
-}
-
-button:hover{
-background:#a47508;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #eee;
-text-align:right;
-}
-
-th:first-child,td:first-child{text-align:center;}
-th:nth-child(3),td:nth-child(3){text-align:left;}
-
-.green{color:#0a8f3d;font-weight:bold;}
-.red{color:#c0392b;font-weight:bold;}
-.gray{color:gray;}
-
-.chart-container{
-max-width:450px;
-height:320px;
-margin:auto;
-}
-
-.lock{
-color:gray;
-}
-
+body{font-family:Arial;background:#f4f6f9;padding:20px}
+.card{background:white;padding:20px;margin-bottom:20px;border-radius:10px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid #ddd;text-align:right}
+th:nth-child(3),td:nth-child(3){text-align:left}
+.green{color:green;font-weight:bold}
+.red{color:red;font-weight:bold}
 </style>
 </head>
+
 <body>
 
-<h1>🪙 Gold Portfolio Dashboard</h1>
+<h1>Gold Portfolio Dashboard</h1>
 
-<!-- INPUT DATA -->
 <div class="card">
 
-<h3>Tambah Transaksi</h3>
+<h3>Tambah LM</h3>
 
-Gram:
-<input type="number" id="gram">
+Gram <input id="gram" type="number">
+Type <input id="type">
+Harga Beli <input id="beli" type="number">
 
-Type:
-<input type="text" id="type">
-
-Harga Beli:
-<input type="number" id="beli">
-
-Status:
 <select id="status">
-<option value="READY">READY</option>
-<option value="PO">PO</option>
-<option value="SOLD">SOLD</option>
+<option>READY</option>
+<option>PO</option>
+<option>SOLD</option>
 </select>
 
 <button onclick="addData()">Tambah</button>
@@ -102,48 +38,35 @@ Status:
 </div>
 
 
-<!-- GOLD PRICE -->
 <div class="card">
 
-Harga emas per gram:
+Harga emas / gram
 
-<input type="number" id="currentPrice" value="1600000">
-
+<input id="price" value="1600000">
 <button onclick="calculate()">Update</button>
 
 </div>
 
 
-<!-- SUMMARY -->
 <div class="card">
 
 <p>Total Modal Aktif: <span id="modal"></span></p>
-
-<p>Total Realized Profit: <span id="profit"></span></p>
-
+<p>Total Realized Profit: <span id="realized"></span></p>
 <p>Total Gram Aktif: <span id="gramTotal"></span></p>
-
+<p>Nilai Portfolio: <span id="portfolio"></span></p>
 <p>Unrealized P/L: <span id="unreal"></span></p>
 
 </div>
 
 
-<!-- CHART -->
 <div class="card">
 
-<h3>Status Distribution</h3>
-
-<div class="chart-container">
 <canvas id="chart"></canvas>
-</div>
 
 </div>
 
 
-<!-- TABLE -->
 <div class="card">
-
-<h3>Detail Transaksi</h3>
 
 <table>
 
@@ -157,7 +80,6 @@ Harga emas per gram:
 <th>Jual</th>
 <th>Status</th>
 <th>Profit</th>
-<th>Action</th>
 </tr>
 
 </thead>
@@ -171,247 +93,116 @@ Harga emas per gram:
 
 <script>
 
-// ======================
-// DATA AWAL (TERKUNCI)
-// ======================
+const owner="USERNAME_GITHUB";
+const repo="REPO_NAME";
+const path="data.json";
+const token="PASTE_TOKEN_DISINI";
 
-const defaultData=[
-
-{gram:5,type:"LM",beli:13500000,jual:15700000,status:"SOLD"},
-{gram:8,type:"LM IMLEK 2026",beli:23950800,jual:26500000,status:"SOLD"},
-{gram:2,type:"LM",beli:5676000,jual:0,status:"PO"},
-{gram:3,type:"LM",beli:9744000,jual:0,status:"PO"},
-{gram:0.5,type:"LM WEDDING COUPLE",beli:1633500,jual:0,status:"READY"},
-{gram:0.5,type:"LM BABY BOY",beli:1633500,jual:0,status:"READY"},
-{gram:0.5,type:"LM BABY GIRL",beli:1633500,jual:0,status:"READY"},
-{gram:0.5,type:"LM WEDDING COUPLE",beli:1606500,jual:0,status:"READY"},
-{gram:0.5,type:"LM BABY BOY",beli:1606500,jual:0,status:"READY"},
-{gram:8,type:"LM IMLEK 2026",beli:24447300,jual:0,status:"READY"}
-
-];
-
-
-// ======================
-// STORAGE
-// ======================
-
-let userData =
-JSON.parse(localStorage.getItem("userData")) || [];
-
-let defaultOverride =
-JSON.parse(localStorage.getItem("defaultOverride")) || [];
-
+let data=[];
+let sha="";
 let chart;
 
 
-// ======================
-// SAVE
-// ======================
+// ====================
+// LOAD DATA
+// ====================
 
-function save(){
+async function loadData(){
 
-localStorage.setItem(
-"userData",
-JSON.stringify(userData)
-);
+const res=await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`);
 
-localStorage.setItem(
-"defaultOverride",
-JSON.stringify(defaultOverride)
-);
+const json=await res.json();
+
+sha=json.sha;
+
+const content=JSON.parse(atob(json.content));
+
+data=content.transactions;
+
+render();
+calculate();
 
 }
 
 
-// ======================
-// GET DATA
-// ======================
+// ====================
+// SAVE DATA
+// ====================
 
-function getData(){
+async function saveData(){
 
-let merged=[...defaultData];
+const content={
+transactions:data
+};
 
-defaultOverride.forEach((o,i)=>{
+const body={
+message:"update gold data",
+content:btoa(JSON.stringify(content,null,2)),
+sha:sha
+};
 
-merged[i]={...merged[i],...o};
+await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`,{
+
+method:"PUT",
+
+headers:{
+Authorization:`token ${token}`
+},
+
+body:JSON.stringify(body)
 
 });
 
-return [...merged,...userData];
+loadData();
 
 }
 
 
-// ======================
+// ====================
 // ADD DATA
-// ======================
+// ====================
 
 function addData(){
 
-let gram =
-parseFloat(document.getElementById("gram").value);
+const gram=parseFloat(document.getElementById("gram").value);
+const type=document.getElementById("type").value;
+const beli=parseFloat(document.getElementById("beli").value);
+const status=document.getElementById("status").value;
 
-let type =
-document.getElementById("type").value;
+let jual=0;
 
-let beli =
-parseFloat(document.getElementById("beli").value);
+if(status=="SOLD"){
 
-let status =
-document.getElementById("status").value;
+let price=parseFloat(document.getElementById("price").value);
 
-let price =
-parseFloat(document.getElementById("currentPrice").value);
+jual=gram*price;
 
-let jual =
-status=="SOLD"? gram*price : 0;
+}
 
-userData.push({
-gram,type,beli,jual,status
-});
+data.push({gram,type,beli,jual,status});
 
-save();
-
-render();
-
-calculate();
+saveData();
 
 }
 
 
-// ======================
-// UPDATE STATUS
-// ======================
-
-function updateStatus(index,value){
-
-let price =
-parseFloat(document.getElementById("currentPrice").value);
-
-let d =
-getData()[index];
-
-if(index<defaultData.length){
-
-defaultOverride[index] =
-defaultOverride[index] || {};
-
-defaultOverride[index].status=value;
-
-if(value=="SOLD" &&
-!defaultOverride[index].jual){
-
-defaultOverride[index].jual =
-d.gram * price;
-
-}
-
-}else{
-
-let i=index-defaultData.length;
-
-userData[i].status=value;
-
-if(value=="SOLD" &&
-!userData[i].jual){
-
-userData[i].jual =
-d.gram * price;
-
-}
-
-}
-
-save();
-
-render();
-
-calculate();
-
-}
-
-
-// ======================
-// UPDATE JUAL
-// ======================
-
-function updateJual(index,value){
-
-value=parseFloat(value)||0;
-
-if(index<defaultData.length){
-
-defaultOverride[index] =
-defaultOverride[index] || {};
-
-defaultOverride[index].jual=value;
-
-if(value>0){
-defaultOverride[index].status="SOLD";
-}
-
-}else{
-
-let i=index-defaultData.length;
-
-userData[i].jual=value;
-
-if(value>0){
-userData[i].status="SOLD";
-}
-
-}
-
-save();
-
-render();
-
-calculate();
-
-}
-
-
-// ======================
-// DELETE DATA BARU
-// ======================
-
-function deleteData(index){
-
-userData.splice(index,1);
-
-save();
-
-render();
-
-calculate();
-
-}
-
-
-// ======================
-// RENDER TABLE
-// ======================
+// ====================
+// RENDER
+// ====================
 
 function render(){
 
-let data=getData();
-
-let tbody =
-document.getElementById("tbody");
+const tbody=document.getElementById("tbody");
 
 tbody.innerHTML="";
 
 data.forEach((d,i)=>{
 
-let profit =
-d.status=="SOLD" ?
-d.jual-d.beli : null;
+let profit=d.status=="SOLD"?d.jual-d.beli:null;
 
-let cls =
-profit>0 ? "green" :
-profit<0 ? "red" : "gray";
+let cls=profit>0?"green":profit<0?"red":"";
 
-tbody.innerHTML += `
+tbody.innerHTML+=`
 
 <tr>
 
@@ -421,43 +212,14 @@ tbody.innerHTML += `
 
 <td>${d.type}</td>
 
-<td>Rp ${d.beli.toLocaleString("id-ID")}</td>
+<td>${d.beli.toLocaleString()}</td>
 
-<td>
-<input type="number"
-value="${d.jual||""}"
-onchange="updateJual(${i},this.value)">
-</td>
+<td>${d.jual?d.jual.toLocaleString():""}</td>
 
-<td>
-<select onchange="updateStatus(${i},this.value)">
-
-<option ${d.status=="READY"?"selected":""}>
-READY
-</option>
-
-<option ${d.status=="PO"?"selected":""}>
-PO
-</option>
-
-<option ${d.status=="SOLD"?"selected":""}>
-SOLD
-</option>
-
-</select>
-</td>
+<td>${d.status}</td>
 
 <td class="${cls}">
-${profit!=null ?
-"Rp "+profit.toLocaleString("id-ID")
-:"-"}
-</td>
-
-<td>
-${i<defaultData.length
-? '<span class="lock">🔒</span>'
-: `<button onclick="deleteData(${i-defaultData.length})">
-Hapus</button>`}
+${profit?profit.toLocaleString():""}
 </td>
 
 </tr>
@@ -469,28 +231,19 @@ Hapus</button>`}
 }
 
 
-// ======================
-// CALCULATE (FIXED)
-// ======================
+// ====================
+// CALCULATE
+// ====================
 
 function calculate(){
 
-let price =
-parseFloat(document.getElementById("currentPrice").value);
+let price=parseFloat(document.getElementById("price").value);
 
-let data =
-getData();
+let modal=0;
+let realized=0;
+let gram=0;
 
-let totalModalAktif=0;
-let totalRealizedProfit=0;
-let totalGramAktif=0;
-let nilaiPortfolio=0;
-
-let statusCount={
-READY:0,
-PO:0,
-SOLD:0
-};
+let statusCount={READY:0,PO:0,SOLD:0};
 
 data.forEach(d=>{
 
@@ -498,66 +251,38 @@ statusCount[d.status]++;
 
 if(d.status=="SOLD"){
 
-totalRealizedProfit +=
-(d.jual||0)-d.beli;
+realized+=d.jual-d.beli;
 
 }else{
 
-totalModalAktif += d.beli;
-
-totalGramAktif += d.gram;
+modal+=d.beli;
+gram+=d.gram;
 
 }
 
 });
 
-let unrealized =
-nilaiPortfolio - totalModalAktif;
+let portfolio=gram*price;
 
+let unreal=portfolio-modal;
 
-// UPDATE UI
+document.getElementById("modal").innerHTML=modal.toLocaleString();
+document.getElementById("realized").innerHTML=realized.toLocaleString();
+document.getElementById("gramTotal").innerHTML=gram;
+document.getElementById("portfolio").innerHTML=portfolio.toLocaleString();
+document.getElementById("unreal").innerHTML=unreal.toLocaleString();
 
-document.getElementById("modal").innerHTML =
-"Rp " + totalModalAktif.toLocaleString("id-ID");
+if(chart)chart.destroy();
 
-document.getElementById("profit").innerHTML =
-"Rp " + totalRealizedProfit.toLocaleString("id-ID");
+chart=new Chart(document.getElementById("chart"),{
 
-document.getElementById("gramTotal").innerHTML =
-totalGramAktif + " gram";
-
-document.getElementById("portfolio").innerHTML =
-"Rp " + nilaiPortfolio.toLocaleString("id-ID");
-
-document.getElementById("unreal").innerHTML =
-`<span class="${unrealized>=0?'green':'red'}">
-Rp ${unrealized.toLocaleString("id-ID")}
-</span>`;
-
-
-// CHART
-
-if(chart) chart.destroy();
-
-chart=new Chart(
-document.getElementById("chart"),
-{
 type:"doughnut",
+
 data:{
 labels:Object.keys(statusCount),
-datasets:[{
-data:Object.values(statusCount),
-backgroundColor:[
-"#2ecc71",
-"#f39c12",
-"#3498db"
-]
-}]
-},
-options:{
-responsive:true,
-maintainAspectRatio:false
+datasets:[{data:Object.values(statusCount)}]
 }
+
 });
 
 }
@@ -565,13 +290,9 @@ maintainAspectRatio:false
 
 // INIT
 
-render();
-calculate();
+loadData();
 
 </script>
 
 </body>
 </html>
-
-
-
